@@ -30,7 +30,8 @@ export default [
           allowTernary: true
         }
       ],
-      'vue/multi-word-component-names': 'off'
+      'vue/multi-word-component-names': 'off',
+      'vue/max-attributes-per-line': 'off'
     }
   }
 ]
