@@ -13,5 +13,6 @@ declare module 'vue' {
     Period: typeof import('./components/Period.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    WalletItem: typeof import('./components/WalletItem.vue')['default']
   }
 }
