@@ -9,9 +9,12 @@ const drawer = ref(false)
 const route = useRoute()
 const path = ref(route.path)
 
-watch(() => route.path, (newPath) => {
-  path.value = newPath
-})
+watch(
+  () => route.path,
+  (newPath) => {
+    path.value = newPath
+  }
+)
 
 const toggleTheme = () => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
