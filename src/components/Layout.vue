@@ -55,7 +55,7 @@ const toggleDrawer = () => {
     </v-navigation-drawer>
 
     <v-main>
-      <v-container>
+      <v-container class="position-relative">
         <RouterView />
       </v-container>
     </v-main>
