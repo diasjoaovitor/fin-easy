@@ -8,6 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     FinanceList: typeof import('./components/FinanceList.vue')['default']
+    Form: typeof import('./components/Form.vue')['default']
     Layout: typeof import('./components/Layout.vue')['default']
     Period: typeof import('./components/Period.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

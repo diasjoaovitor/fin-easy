@@ -4,6 +4,8 @@ import { formatCurrency } from '@/utils'
 import dayjs from 'dayjs'
 
 defineProps<{ items: TFinance[] }>()
+
+const emit = defineEmits(['select:finance'])
 </script>
 
 <template>
@@ -13,6 +15,7 @@ defineProps<{ items: TFinance[] }>()
       :key="item.id"
       class="border-lg rounded"
       :style="`border-color: rgb(var(--v-theme-${item.type === '-' ? 'error' : 'primary'})) !important`"
+      @click="emit('select:finance', item)"
     >
       <div class="d-flex flex-row justify-space-between align-center ga-2">
         <div v-if="item.description">

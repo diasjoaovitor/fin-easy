@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { currentMonth, currentYear, months } from '@/constants'
+import { currentMonth, currentYear, defaultFinance, months } from '@/constants'
 import type { TFinance } from '@/models'
+import type { TFormMode } from '@/types'
 
 const month = ref(months[currentMonth - 1])
 const year = ref(currentYear)
 const years = ref([currentYear - 1, currentYear, currentYear + 1])
 
+const overlay = ref(false)
+const mode = ref<TFormMode>('create')
+
+const finance = ref<TFinance>(defaultFinance)
 const data = computed(() => ({
   balance: 100,
   expenses: 200,
@@ -60,6 +65,20 @@ const handleMonthChange = (value: string) => {
 const handleYearChange = (value: number) => {
   year.value = value
 }
+
+const updateOverlay = (value: boolean) => {
+  overlay.value = value
+  if (!value) {
+    finance.value = defaultFinance
+    mode.value = 'create'
+  }
+}
+
+const selectFinance = (value: TFinance) => {
+  finance.value = value
+  mode.value = 'update'
+  overlay.value = true
+}
 </script>
 
 <template>
@@ -96,6 +115,17 @@ const handleYearChange = (value: number) => {
   </section>
   <section>
     <h2 class="mt-6 mb-4">Lançamentos no mês</h2>
-    <FinanceList :items="data.finances" />
+    <FinanceList :items="data.finances" @select:finance="selectFinance" />
   </section>
+  <div class="position-sticky bottom-0 text-right">
+    <v-btn icon="mdi-plus" color="primary" @click="overlay = !overlay">
+      <v-icon class="text-h4">mdi-plus</v-icon>
+    </v-btn>
+  </div>
+  <Form
+    :finance="finance"
+    :mode="mode"
+    :overlay="overlay"
+    @update:overlay="updateOverlay"
+  />
 </template>
