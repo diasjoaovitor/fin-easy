@@ -8,7 +8,14 @@ const { color } = defineProps<{
   color: string
 }>()
 
-const style = `border-color: rgb(var(--v-theme-${color})) !important`
+const style = ref(`border-color: rgb(var(--v-theme-${color})) !important`)
+
+watch(
+  () => color,
+  (newColor) => {
+    style.value = `border-color: rgb(var(--v-theme-${newColor})) !important`
+  }
+)
 </script>
 
 <template>
