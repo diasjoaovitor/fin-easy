@@ -1,62 +1,43 @@
 <script setup lang="ts">
 import { currentMonth, currentYear, defaultFinance, months } from '@/constants'
 import type { TFinance } from '@/models'
-import type { TFormMode } from '@/types'
+import { useAppStore } from '@/stores'
+import type { TFormMode, TWalletData } from '@/types'
+import { getPeriod, getWallet } from '@/utils'
+
+const appStore = useAppStore()
 
 const month = ref(months[currentMonth - 1])
 const year = ref(currentYear)
 const years = ref([currentYear - 1, currentYear, currentYear + 1])
 
-const overlay = ref(false)
+const formOverlay = ref(false)
 const mode = ref<TFormMode>('create')
 
-const finance = ref<TFinance>(defaultFinance)
-const data = computed(() => ({
-  balance: 100,
-  expenses: 200,
-  incomes: 300,
-  finances: [
-    {
-      id: '1',
-      type: '+',
-      category: 'Salário',
-      date: '2024-12-21',
-      value: 100,
-      createdAt: '2024-12-21T00:00:00.000Z',
-      updatedAt: '2024-12-21T00:00:00.000Z'
-    },
-    {
-      id: '2',
-      type: '-',
-      category: 'Alimentação',
-      description: 'Mercado',
-      date: '2024-12-21',
-      value: 200,
-      createdAt: '2024-12-21T00:00:00.000Z',
-      updatedAt: '2024-12-21T00:00:00.000Z'
-    },
-    {
-      id: '3',
-      type: '+',
-      category: 'Bônus',
-      description: 'Bônus de natal',
-      date: '2024-12-21',
-      value: 200,
-      createdAt: '2024-12-21T00:00:00.000Z',
-      updatedAt: '2024-12-21T00:00:00.000Z'
-    },
-    {
-      id: '4',
-      type: '-',
-      category: 'Transporte',
-      description: 'Gasolina',
-      date: '2024-12-21',
-      value: 100,
-      createdAt: '2024-12-21T00:00:00.000Z',
-      updatedAt: '2024-12-21T00:00:00.000Z'
-    }
-  ] as TFinance[]
-}))
+const finances = ref<TFinance[]>([])
+const finance = ref(defaultFinance as TFinance)
+const wallet = ref<TWalletData>({
+  balance: 0,
+  incomes: 0,
+  expenses: 0
+})
+
+onMounted(async () => {
+  await appStore.fetchFinances()
+})
+
+watch([month, year], async ([newMonth, newYear]) => {
+  appStore.period = getPeriod({ month: newMonth, year: newYear, months })
+  await appStore.fetchFinances()
+})
+
+watch(
+  () => appStore.finances,
+  () => {
+    finances.value = appStore.finances
+    wallet.value = getWallet(appStore.finances)
+  }
+)
 
 const handleMonthChange = (value: string) => {
   month.value = value
@@ -66,10 +47,10 @@ const handleYearChange = (value: number) => {
   year.value = value
 }
 
-const updateOverlay = (value: boolean) => {
-  overlay.value = value
+const updateFormOverlay = (value: boolean) => {
+  formOverlay.value = value
   if (!value) {
-    finance.value = defaultFinance
+    finance.value = defaultFinance as TFinance
     mode.value = 'create'
   }
 }
@@ -77,7 +58,7 @@ const updateOverlay = (value: boolean) => {
 const selectFinance = (value: TFinance) => {
   finance.value = value
   mode.value = 'update'
-  overlay.value = true
+  formOverlay.value = true
 }
 </script>
 
@@ -95,19 +76,19 @@ const selectFinance = (value: TFinance) => {
     <div class="d-flex flex-column flex-sm-row ga-4">
       <WalletItem
         label="Saldo"
-        :value="data.balance"
+        :value="wallet.balance"
         icon="mdi-currency-usd"
-        :color="data.balance >= 0 ? 'success' : 'warning'"
+        :color="wallet.balance >= 0 ? 'success' : 'warning'"
       />
       <WalletItem
         label="Entradas"
-        :value="data.incomes"
+        :value="wallet.incomes"
         icon="mdi-arrow-up"
         color="primary"
       />
       <WalletItem
         label="Saídas"
-        :value="data.expenses"
+        :value="wallet.expenses"
         icon="mdi-arrow-down"
         color="error"
       />
@@ -115,17 +96,26 @@ const selectFinance = (value: TFinance) => {
   </section>
   <section>
     <h2 class="mt-6 mb-4">Lançamentos no mês</h2>
-    <FinanceList :items="data.finances" @select:finance="selectFinance" />
+    <FinanceList :items="finances" @select:finance="selectFinance" />
   </section>
   <div class="position-sticky bottom-0 text-right">
-    <v-btn icon="mdi-plus" color="primary" @click="overlay = !overlay">
+    <v-btn icon="mdi-plus" color="primary" @click="formOverlay = !formOverlay">
       <v-icon class="text-h4">mdi-plus</v-icon>
     </v-btn>
   </div>
-  <Form
+  <FinanceForm
     :finance="finance"
     :mode="mode"
-    :overlay="overlay"
-    @update:overlay="updateOverlay"
+    :overlay="formOverlay"
+    @update:overlay="updateFormOverlay"
   />
 </template>
+
+<style scoped lang="scss">
+@media screen and (min-width: 800px) {
+  .v-list {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+</style>

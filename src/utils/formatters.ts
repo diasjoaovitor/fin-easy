@@ -25,3 +25,7 @@ export const formatCurrencyMask = (value: number) => {
     maximumFractionDigits: 2
   }).format(number)
 }
+
+export const formatCurrencyToNumber = (value: string) => {
+  return parseInt(value.replace(/\D/g, '')) || 0
+}

@@ -59,5 +59,7 @@ const toggleDrawer = () => {
         <RouterView />
       </v-container>
     </v-main>
+    <Loader />
+    <Alert />
   </v-app>
 </template>

@@ -19,6 +19,7 @@
     "@mdi/font": "7.4.47",
     "core-js": "^3.37.1",
     "dayjs": "^1.11.13",
+    "firebase": "^11.1.0",
     "roboto-fontface": "*",
     "vee-validate": "^4.15.0",
     "vue": "^3.4.31",

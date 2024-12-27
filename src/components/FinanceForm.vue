@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { useField, useForm } from 'vee-validate'
 import dayjs from 'dayjs'
-import type { TFinance } from '@/models'
+import type { TFinance, TFinanceType } from '@/models'
 import type { TFormMode } from '@/types'
 import { financeSchema } from '@/schemas'
-import { formatCurrencyMask } from '@/utils'
+import {
+  formatCurrencyMask,
+  formatCurrencyToNumber,
+  getButtonColor
+} from '@/utils'
+import { useAppStore } from '@/stores'
+
+const appStore = useAppStore()
 
 const props = defineProps<{
   finance: TFinance
@@ -14,19 +21,21 @@ const props = defineProps<{
 
 const overlay = ref(props.overlay)
 
+const dialog = ref(false)
+
 const { handleReset, handleSubmit, resetForm } = useForm({
   validationSchema: financeSchema,
   initialValues: {
     ...props.finance,
-    value: formatCurrencyMask(props.finance.value * 100)
+    value: formatCurrencyMask(props.finance.value)
   }
 })
 
-const typeField = useField('type')
-const categoryField = useField('category')
-const descriptionField = useField('description')
-const valueField = useField('value')
-const dateField = useField('date')
+const typeField = useField<TFinanceType>('type')
+const categoryField = useField<string>('category')
+const descriptionField = useField<string>('description')
+const valueField = useField<string>('value')
+const dateField = useField<string>('date')
 
 const emit = defineEmits(['update:overlay'])
 
@@ -55,7 +64,7 @@ watch(
     resetForm({
       values: {
         ...props.finance,
-        value: formatCurrencyMask(props.finance.value * 100)
+        value: formatCurrencyMask(props.finance.value)
       }
     })
   },
@@ -64,7 +73,7 @@ watch(
 
 const handleInput = (event: InputEvent) => {
   const input = event.target as HTMLInputElement
-  const value = parseInt(input.value.replace(/\D/g, '')) || 0
+  const value = formatCurrencyToNumber(input.value)
   valueField.value.value = formatCurrencyMask(value)
 }
 
@@ -75,8 +84,21 @@ const setCursorToEnd = (event: FocusEvent) => {
   }, 0)
 }
 
-const submit = handleSubmit((values) => {
-  alert(JSON.stringify(values, null, 2))
+const handleDelete = async () => {
+  await appStore.deleteFinance(props.finance.id)
+  dialog.value = false
+  overlay.value = false
+}
+
+const submit = handleSubmit(async (values) => {
+  const data = {
+    ...values,
+    value: formatCurrencyToNumber(values.value) / 100
+  }
+  props.mode === 'create'
+    ? await appStore.createFinance(data)
+    : await appStore.updateFinance({ ...props.finance, ...data })
+  overlay.value = false
 })
 </script>
 
@@ -132,15 +154,40 @@ const submit = handleSubmit((values) => {
           prepend-inner-icon="$calendar"
         />
         <v-btn
+          v-if="mode === 'create'"
           type="submit"
-          :color="typeField.value.value === '-' ? 'error' : 'primary'"
+          :color="getButtonColor(typeField.value.value)"
           class="w-100"
         >
           Salvar
         </v-btn>
+        <div v-else class="d-flex ga-2">
+          <v-btn
+            type="submit"
+            :color="getButtonColor(typeField.value.value)"
+            class="w-75"
+          >
+            Salvar
+          </v-btn>
+          <v-btn
+            type="button"
+            color="warning"
+            class="flex-1-1"
+            @click="dialog = true"
+          >
+            Excluir
+          </v-btn>
+        </div>
       </v-form>
     </v-card>
   </v-overlay>
+  <Dialog
+    :dialog="dialog"
+    title="Atenção"
+    text="Deseja realmente excluir este lançamento?"
+    :confirm="handleDelete"
+    @close:dialog="dialog = $event"
+  />
 </template>
 
 <style scoped lang="scss">

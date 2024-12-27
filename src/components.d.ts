@@ -7,9 +7,13 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Alert: typeof import('./components/Alert.vue')['default']
+    Dialog: typeof import('./components/Dialog.vue')['default']
+    FinanceForm: typeof import('./components/FinanceForm.vue')['default']
     FinanceList: typeof import('./components/FinanceList.vue')['default']
     Form: typeof import('./components/Form.vue')['default']
     Layout: typeof import('./components/Layout.vue')['default']
+    Loader: typeof import('./components/Loader.vue')['default']
     Period: typeof import('./components/Period.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

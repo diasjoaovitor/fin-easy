@@ -20,3 +20,5 @@ export const currentDate = dayjs().format('YYYY-MM-DD')
 export const currentYear = Number(dayjs().format('YYYY'))
 
 export const currentMonth = Number(dayjs().format('MM'))
+
+export const currentPeriod = dayjs().format('YYYY-MM')
