@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { TFinance } from '@/models'
 import { formatCurrency } from '@/utils'
-import dayjs from 'dayjs'
 
 defineProps<{ items: TFinance[] }>()
 
@@ -10,6 +10,9 @@ const emit = defineEmits(['select:finance'])
 
 <template>
   <v-list class="pa-4 rounded d-flex flex-column ga-2">
+    <v-list-item v-if="items.length === 0">
+      <v-list-item-title> Nenhum lançamento encontrado </v-list-item-title>
+    </v-list-item>
     <v-list-item
       v-for="item in items"
       :key="item.id"
