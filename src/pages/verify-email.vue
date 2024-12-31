@@ -31,7 +31,10 @@ const resend = async () => {
     <v-card-text>
       <p>
         Enviamos um email de verificação para o endereço
-        <strong>{{ email }}</strong>. Por favor, verifique sua caixa de entrada e clique no link de
+        <strong>
+          {{ email }}
+        </strong>
+        . Por favor, verifique sua caixa de entrada e clique no link de
         verificação.
       </p>
       <p class="my-2">
