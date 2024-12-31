@@ -1,13 +1,33 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { navItems } from '@/constants'
+import { useAppStore } from '@/stores'
+import { authConfig } from '@/config'
 
 const items = ref(navItems)
 const theme = ref('dark')
 const drawer = ref(false)
 
+const router = useRouter()
 const route = useRoute()
 const path = ref(route.path)
+
+const store = useAppStore()
+
+const publicRoutes = ['/signin', '/signup', '/verify-email', '/reset-password']
+
+authConfig.onAuthStateChanged((user) => {
+  if (user?.emailVerified) {
+    router.push('/')
+  } else if (user?.emailVerified === false) {
+    router.push('/verify-email')
+    return
+  } else {
+    router.push('/signin')
+  }
+
+  store.isLoading = false
+})
 
 watch(
   () => route.path,
@@ -26,7 +46,14 @@ const toggleDrawer = () => {
 </script>
 
 <template>
-  <v-app :theme="theme">
+  <v-app v-if="publicRoutes.includes(path)" :theme="theme">
+    <v-container
+      class="position-relative flex-1-1 d-flex flex-column align-center justify-center"
+    >
+      <RouterView />
+    </v-container>
+  </v-app>
+  <v-app v-else :theme="theme">
     <v-app-bar>
       <v-app-bar-nav-icon
         variant="text"
@@ -38,6 +65,7 @@ const toggleDrawer = () => {
         :icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
         @click="toggleTheme"
       />
+      <v-btn icon="mdi-logout" @click="store.signOut" />
     </v-app-bar>
 
     <v-navigation-drawer v-model="drawer">
@@ -59,7 +87,7 @@ const toggleDrawer = () => {
         <RouterView />
       </v-container>
     </v-main>
-    <Loader />
-    <Alert />
   </v-app>
+  <Loader />
+  <Alert />
 </template>

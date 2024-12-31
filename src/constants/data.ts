@@ -1,7 +1,10 @@
-import type { TArgsCreate, TFinance } from '@/models'
+import type { TFinanceArgsCreate, TFinanceModel } from '@/models'
 import { currentDate } from './date'
 
-export const defaultFinance: TArgsCreate<TFinance> = {
+export const defaultFinance: Omit<
+  TFinanceArgsCreate<TFinanceModel>,
+  'userRef'
+> = {
   type: '-',
   description: '',
   category: 'Outros',

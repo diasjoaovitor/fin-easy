@@ -1,9 +1,12 @@
 import { defineStore } from 'pinia'
-import type { TArgsCreate, TFinance } from '@/models'
-import { FinanceService } from '@/services'
-import { currentPeriod } from '@/constants'
+import { type AuthError, type User } from 'firebase/auth'
+import type { TFinanceArgsCreate, TFinanceModel } from '@/models'
 import type { TAlertProps } from '@/types'
+import { AuthService, FinanceService } from '@/services'
+import { currentPeriod } from '@/constants'
+import { getAuthErrorMessage } from '@/utils'
 
+const authService = new AuthService()
 const financeService = new FinanceService()
 
 const handler = async (
@@ -16,28 +19,124 @@ const handler = async (
     alert: {
       success?: TAlertProps
       error: TAlertProps
+      typeError?: 'auth'
     }
   }
 ) => {
   try {
     context.isLoading = true
     await callback()
-    context.isLoading = false
     context.alert = alert.success
   } catch (error) {
     console.error(error)
-    context.alert = alert.error
+    if (alert.typeError === 'auth') {
+      context.alert = {
+        ...alert.error,
+        text: getAuthErrorMessage(error as AuthError)
+      }
+    } else context.alert = alert.error
+  } finally {
+    context.isLoading = false
   }
 }
 
 export const useAppStore = defineStore('app', {
   state: () => ({
     period: currentPeriod,
-    finances: [] as TFinance[],
+    finances: [] as TFinanceModel[],
     isLoading: true,
     alert: { open: false, type: 'success', title: '' } as TAlertProps
   }),
   actions: {
+    async signUp({ email, password }: { email: string; password: string }) {
+      await handler(
+        async () => {
+          await authService.signUp(email, password)
+        },
+        {
+          context: this,
+          alert: {
+            error: {
+              open: true,
+              title: 'Erro ao fazer sign up',
+              type: 'error'
+            },
+            typeError: 'auth'
+          }
+        }
+      )
+    },
+    async signIn({ email, password }: { email: string; password: string }) {
+      await handler(
+        async () => {
+          await authService.signIn(email, password)
+        },
+        {
+          context: this,
+          alert: {
+            error: {
+              open: true,
+              title: 'Erro ao fazer sign in',
+              type: 'error'
+            },
+            typeError: 'auth'
+          }
+        }
+      )
+    },
+    async signOut() {
+      await handler(
+        async () => {
+          await authService.signOut()
+        },
+        {
+          context: this,
+          alert: {
+            error: {
+              open: true,
+              title: 'Erro ao fazer sign out',
+              type: 'error'
+            },
+            typeError: 'auth'
+          }
+        }
+      )
+    },
+    async resetPassword({ email }: { email: string }) {
+      await handler(
+        async () => {
+          await authService.resetPassword(email)
+        },
+        {
+          context: this,
+          alert: {
+            error: {
+              open: true,
+              title: 'Erro ao recuperar a senha',
+              type: 'error'
+            },
+            typeError: 'auth'
+          }
+        }
+      )
+    },
+    async resendEmailVerification(user: User) {
+      await handler(
+        async () => {
+          await authService.resendEmailVerification(user)
+        },
+        {
+          context: this,
+          alert: {
+            error: {
+              open: true,
+              title: 'Erro ao reenviar o email de verificação',
+              type: 'error'
+            }
+          }
+        }
+      )
+    },
     async fetchFinances() {
       await handler(
         async () => {
@@ -55,7 +154,7 @@ export const useAppStore = defineStore('app', {
         }
       )
     },
-    async createFinance(data: TArgsCreate<TFinance>) {
+    async createFinance(data: TFinanceArgsCreate<TFinanceModel>) {
       await handler(
         async () => {
           await financeService.create(data)
@@ -78,7 +177,7 @@ export const useAppStore = defineStore('app', {
         }
       )
     },
-    async updateFinance(data: TFinance) {
+    async updateFinance(data: TFinanceModel) {
       await handler(
         async () => {
           await financeService.update(data)

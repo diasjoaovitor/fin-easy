@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import type { TFinance } from '@/models'
+import type { TFinanceModel } from '@/models'
 import { formatCurrency } from '@/utils'
 
-defineProps<{ items: TFinance[] }>()
+defineProps<{ items: TFinanceModel[] }>()
 
 const emit = defineEmits(['select:finance'])
 </script>

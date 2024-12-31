@@ -1,27 +1,31 @@
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
   getDocs,
   orderBy,
   query,
-  setDoc,
   updateDoc,
   where
 } from 'firebase/firestore'
-import type { TArgsCreate, TArgsUpdate, TFinance } from '@/models'
+import type {
+  TFinanceArgsCreate,
+  TFinanceArgsUpdate,
+  TFinanceModel
+} from '@/models'
 import { db } from '@/config'
 import { getTimestamp } from '@/utils'
 
 interface IFinanceService<T> {
   findByPeriod: (period: string) => Promise<T[]>
-  create: (data: TArgsCreate<T>) => Promise<void>
-  update: (data: TArgsUpdate<T>) => Promise<void>
+  create: (data: TFinanceArgsCreate<T>) => Promise<void>
+  update: (data: TFinanceArgsUpdate<T>) => Promise<void>
   delete: (id: string) => Promise<void>
 }
 
-export class FinanceService implements IFinanceService<TFinance> {
-  private collectionName = 'finance'
+export class FinanceService implements IFinanceService<TFinanceModel> {
+  private collectionName = 'finances'
 
   findByPeriod = async (period: string) => {
     const q = query(
@@ -35,25 +39,24 @@ export class FinanceService implements IFinanceService<TFinance> {
       id: doc.id,
       ...doc.data()
     }))
-    return data as TFinance[]
+    return data as TFinanceModel[]
   }
 
-  create = async (data: TArgsCreate<TFinance>) => {
-    const docRef = doc(collection(db, this.collectionName))
+  create = async (data: TFinanceArgsCreate<TFinanceModel>) => {
+    const docRef = collection(db, this.collectionName)
     const timestamp = getTimestamp()
-    const finance: TFinance = {
+    const finance: Omit<TFinanceModel, 'id'> = {
       ...data,
-      id: docRef.id,
       createdAt: timestamp,
       updatedAt: timestamp
     }
-    await setDoc(docRef, finance)
+    await addDoc(docRef, finance)
   }
 
-  update = async (data: TArgsUpdate<TFinance>) => {
+  update = async (data: TFinanceArgsUpdate<TFinanceModel>) => {
     const docRef = doc(db, this.collectionName, data.id)
     const timestamp = getTimestamp()
-    const finance: TFinance = {
+    const finance: TFinanceModel = {
       ...data,
       updatedAt: timestamp
     }

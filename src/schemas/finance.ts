@@ -17,6 +17,13 @@ export const financeSchema = yup.object().shape({
       const number = value.replace(/[^\d]/g, '')
       return parseInt(number) > 0
     }),
-  date: yup.date().required('Data é obrigatória'),
+  date: yup
+    .string()
+    .required('Data é obrigatória')
+    .test('isDate', 'Data inválida', (value) => {
+      return !isNaN(Date.parse(value))
+    }),
   category: yup.string().required('Categoria é obrigatória')
 })
+
+export type TFinanceFormData = yup.InferType<typeof financeSchema>

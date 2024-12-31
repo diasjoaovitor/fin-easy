@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { currentMonth, currentYear, defaultFinance, months } from '@/constants'
-import type { TFinance } from '@/models'
+import type { TFinanceModel } from '@/models'
 import { useAppStore } from '@/stores'
 import type { TFormMode, TWalletData } from '@/types'
 import { getPeriod, getWallet } from '@/utils'
@@ -14,8 +14,8 @@ const years = ref([currentYear - 1, currentYear, currentYear + 1])
 const formOverlay = ref(false)
 const mode = ref<TFormMode>('create')
 
-const finances = ref<TFinance[]>([])
-const finance = ref(defaultFinance as TFinance)
+const finances = ref<TFinanceModel[]>([])
+const finance = ref(defaultFinance as TFinanceModel)
 const wallet = ref<TWalletData>({
   balance: 0,
   incomes: 0,
@@ -50,12 +50,12 @@ const handleYearChange = (value: number) => {
 const updateFormOverlay = (value: boolean) => {
   formOverlay.value = value
   if (!value) {
-    finance.value = defaultFinance as TFinance
+    finance.value = defaultFinance as TFinanceModel
     mode.value = 'create'
   }
 }
 
-const selectFinance = (value: TFinance) => {
+const selectFinance = (value: TFinanceModel) => {
   finance.value = value
   mode.value = 'update'
   formOverlay.value = true

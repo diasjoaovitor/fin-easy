@@ -1,7 +1,8 @@
 export type TFinanceType = '+' | '-'
 
-export type TFinance = {
+export type TFinanceModel = {
   id: string
+  userRef: string
   type: TFinanceType
   value: number
   description?: string
@@ -11,6 +12,6 @@ export type TFinance = {
   updatedAt: string
 }
 
-export type TArgsCreate<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>
+export type TFinanceArgsCreate<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>
 
-export type TArgsUpdate<T> = Omit<T, 'updatedAt'> & { id: string }
+export type TFinanceArgsUpdate<T> = Omit<T, 'updatedAt'> & { id: string }

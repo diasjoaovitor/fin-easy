@@ -1,34 +1,42 @@
 <script setup lang="ts">
 import { useField, useForm } from 'vee-validate'
 import dayjs from 'dayjs'
-import type { TFinance, TFinanceType } from '@/models'
+import type { TFinanceModel, TFinanceType } from '@/models'
 import type { TFormMode } from '@/types'
-import { financeSchema } from '@/schemas'
+import { financeSchema, type TFinanceFormData } from '@/schemas'
 import {
   formatCurrencyMask,
   formatCurrencyToNumber,
   getButtonColor
 } from '@/utils'
 import { useAppStore } from '@/stores'
+import { authConfig } from '@/config'
 
 const appStore = useAppStore()
 
 const props = defineProps<{
-  finance: TFinance
+  finance: TFinanceModel
   mode: TFormMode
   overlay: boolean
 }>()
+
+const userRef = authConfig.currentUser?.uid as string
 
 const overlay = ref(props.overlay)
 
 const dialog = ref(false)
 
+const initialValues = computed<TFinanceFormData>(() => ({
+  category: props.finance.category,
+  date: props.finance.date,
+  description: props.finance.description,
+  type: props.finance.type,
+  value: formatCurrencyMask(props.finance.value)
+}))
+
 const { handleReset, handleSubmit, resetForm } = useForm({
   validationSchema: financeSchema,
-  initialValues: {
-    ...props.finance,
-    value: formatCurrencyMask(props.finance.value)
-  }
+  initialValues: initialValues.value
 })
 
 const typeField = useField<TFinanceType>('type')
@@ -62,10 +70,7 @@ watch(
   () => props.finance,
   () => {
     resetForm({
-      values: {
-        ...props.finance,
-        value: formatCurrencyMask(props.finance.value)
-      }
+      values: initialValues.value
     })
   },
   { immediate: true }
@@ -91,13 +96,10 @@ const handleDelete = async () => {
 }
 
 const submit = handleSubmit(async (values) => {
-  const data = {
-    ...values,
-    value: formatCurrencyToNumber(values.value) / 100
-  }
+  const value = formatCurrencyToNumber(values.value) / 100
   props.mode === 'create'
-    ? await appStore.createFinance(data)
-    : await appStore.updateFinance({ ...props.finance, ...data })
+    ? await appStore.createFinance({ ...values, value, userRef })
+    : await appStore.updateFinance({ ...props.finance, ...values, value })
   overlay.value = false
 })
 </script>

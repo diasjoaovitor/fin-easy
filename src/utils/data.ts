@@ -1,7 +1,7 @@
-import type { TFinance } from '@/models'
+import type { TFinanceModel } from '@/models'
 import type { TWalletData } from '@/types'
 
-export const getWallet = (finances: TFinance[]): TWalletData => {
+export const getWallet = (finances: TFinanceModel[]): TWalletData => {
   let incomes = 0
   let expenses = 0
 
