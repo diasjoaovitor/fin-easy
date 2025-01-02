@@ -2,6 +2,7 @@
 import dayjs from 'dayjs'
 import type { TFinanceModel } from '@/models'
 import { formatCurrency } from '@/utils'
+import { expenseCategories, incomeCategories } from '@/constants'
 
 defineProps<{ items: TFinanceModel[] }>()
 
@@ -21,18 +22,27 @@ const emit = defineEmits(['select:finance'])
       @click="emit('select:finance', item)"
     >
       <div class="d-flex flex-row justify-space-between align-center ga-2">
-        <div v-if="item.description">
-          <v-list-item-subtitle class="text-caption">
-            {{ item.category }}
-          </v-list-item-subtitle>
-          <v-list-item-title class="text-h6">
-            {{ item.description }}
-          </v-list-item-title>
-        </div>
-        <div v-else>
-          <v-list-item-title class="text-h6">
-            {{ item.category }}
-          </v-list-item-title>
+        <div class="d-flex flex-row align-center ga-4">
+          <v-icon
+            :icon="
+              [...expenseCategories, ...incomeCategories].find(
+                (category) => category.label === item.category
+              )?.icon
+            "
+          />
+          <div v-if="item.description">
+            <v-list-item-subtitle class="text-caption">
+              {{ item.category }}
+            </v-list-item-subtitle>
+            <v-list-item-title class="text-h6">
+              {{ item.description }}
+            </v-list-item-title>
+          </div>
+          <div v-else>
+            <v-list-item-title class="text-h6">
+              {{ item.category }}
+            </v-list-item-title>
+          </div>
         </div>
         <div>
           <v-list-item-subtitle class="text-caption text-right">

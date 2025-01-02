@@ -11,6 +11,7 @@ import {
 } from '@/utils'
 import { useAppStore } from '@/stores'
 import { authConfig } from '@/config'
+import { expenseCategories, incomeCategories } from '@/constants'
 
 const appStore = useAppStore()
 
@@ -45,6 +46,13 @@ const descriptionField = useField<string>('description')
 const valueField = useField<string>('value')
 const dateField = useField<string>('date')
 
+const categories = computed(() =>
+  typeField.value.value === '-' ? expenseCategories : incomeCategories
+)
+const color = computed(() =>
+  typeField.value.value === '+' ? 'primary' : 'error'
+)
+
 const emit = defineEmits(['update:overlay'])
 
 watch(
@@ -58,6 +66,14 @@ watch(overlay, (newOverlay) => {
   emit('update:overlay', newOverlay)
   handleReset()
 })
+
+watch(
+  () => typeField.value.value,
+  () => {
+    categoryField.value.value = 'Outros'
+  },
+  { immediate: true }
+)
 
 watch(
   () => dateField.value.value,
@@ -124,23 +140,55 @@ const submit = handleSubmit(async (values) => {
           <v-radio label="Entrada" value="+" color="primary" />
           <v-radio label="Saída" value="-" color="error" />
         </v-radio-group>
-        <v-text-field
-          v-model.trim="categoryField.value.value"
-          :error-messages="categoryField.errorMessage.value"
-          label="Categoria"
-          variant="outlined"
-        />
+        <v-radio-group v-model="categoryField.value.value">
+          <fieldset class="pa-4 pt-2 rounded">
+            <legend class="text-caption text-medium-emphasis">Categoria</legend>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 4px;
+              "
+            >
+              <v-label
+                v-for="{ icon, label } in categories"
+                :key="label"
+                class="cursor-pointer border rounded pa-2 d-block text-center"
+                :class="{
+                  [`border-${color}`]: label === categoryField.value.value
+                }"
+              >
+                <v-radio :value="label" class="d-none" />
+                <v-icon
+                  :color="label !== categoryField.value.value ? '' : color"
+                >
+                  {{ icon }}
+                </v-icon>
+                <div
+                  class="text-caption"
+                  :class="{
+                    [`text-${color}`]: label === categoryField.value.value
+                  }"
+                >
+                  {{ label }}
+                </div>
+              </v-label>
+            </div>
+          </fieldset>
+        </v-radio-group>
         <v-text-field
           v-model.trim="descriptionField.value.value"
           :error-messages="descriptionField.errorMessage.value"
           label="Descrição"
           variant="outlined"
+          :color="color"
         />
         <v-text-field
           v-model="valueField.value.value"
           :error-messages="valueField.errorMessage.value"
           label="Valor"
           variant="outlined"
+          :color="color"
           prefix="R$"
           inputmode="numeric"
           @input="handleInput"
@@ -152,6 +200,7 @@ const submit = handleSubmit(async (values) => {
           type="date-local"
           label="Data"
           variant="outlined"
+          :color="color"
           prepend-icon=""
           prepend-inner-icon="$calendar"
         />
@@ -191,10 +240,3 @@ const submit = handleSubmit(async (values) => {
     @close:dialog="dialog = $event"
   />
 </template>
-
-<style scoped lang="scss">
-.relative {
-  position: relative;
-  right: -10px;
-}
-</style>
