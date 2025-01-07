@@ -5,6 +5,7 @@ import type { TAlertProps } from '@/types'
 import { AuthService, FinanceService } from '@/services'
 import { currentPeriod } from '@/constants'
 import { getAuthErrorMessage } from '@/utils'
+import { authConfig } from '@/config'
 
 const authService = new AuthService()
 const financeService = new FinanceService()
@@ -140,7 +141,11 @@ export const useAppStore = defineStore('app', {
     async fetchFinances() {
       await handler(
         async () => {
-          this.finances = await financeService.findByPeriod(this.period)
+          const user = authConfig.currentUser
+          this.finances = await financeService.findByPeriod(
+            this.period,
+            user!.uid
+          )
         },
         {
           context: this,
