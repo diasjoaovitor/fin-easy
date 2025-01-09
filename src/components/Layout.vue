@@ -12,20 +12,23 @@ const router = useRouter()
 const route = useRoute()
 const path = ref(route.path)
 
+const user = ref(authConfig.currentUser)
+
 const store = useAppStore()
 
 const publicRoutes = ['/signin', '/signup', '/verify-email', '/reset-password']
 
-authConfig.onAuthStateChanged((user) => {
-  if (user?.emailVerified) {
+authConfig.onAuthStateChanged((u) => {
+  if (u?.emailVerified) {
     router.push('/')
-  } else if (user?.emailVerified === false) {
+  } else if (u?.emailVerified === false) {
     router.push('/verify-email')
     return
   } else {
     router.push('/signin')
   }
 
+  user.value = u
   store.isLoading = false
 })
 
@@ -53,6 +56,7 @@ const toggleDrawer = () => {
       <RouterView />
     </v-container>
   </v-app>
+  <Loader v-else-if="!user" />
   <v-app v-else :theme="theme">
     <v-app-bar>
       <v-app-bar-nav-icon
