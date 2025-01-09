@@ -1,7 +1,8 @@
 import dayjs from 'dayjs'
 import { Rule } from '@/config'
-import type { TFinanceModel } from '@/models'
+import type { TFinanceModel, TFrequencyType } from '@/models'
 import type { TArgsCreate } from '@/types'
+import type { IRRuleOptions } from '@rschedule/core/rules/ICAL_RULES'
 
 export const transformToRecurringFinance = (
   finance: TArgsCreate<TFinanceModel>
@@ -11,7 +12,7 @@ export const transformToRecurringFinance = (
   const rule = new Rule({
     frequency: recurringType,
     start: dayjs(date)
-  })
+  } as IRRuleOptions & { frequency: TFrequencyType })
 
   const finances = rule
     .occurrences({ take: numberOfRepeats })
