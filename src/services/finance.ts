@@ -7,22 +7,15 @@ import {
   orderBy,
   query,
   updateDoc,
-  where
+  where,
+  writeBatch
 } from 'firebase/firestore'
-import type {
-  TFinanceArgsCreate,
-  TFinanceArgsUpdate,
-  TFinanceModel
-} from '@/models'
+import { v4 as uuid } from 'uuid'
+import type { TFinanceModel } from '@/models'
 import { db } from '@/config'
 import { getTimestamp } from '@/utils'
-
-interface IFinanceService<T> {
-  findByPeriod: (period: string, userRef: string) => Promise<T[]>
-  create: (data: TFinanceArgsCreate<T>) => Promise<void>
-  update: (data: TFinanceArgsUpdate<T>) => Promise<void>
-  delete: (id: string) => Promise<void>
-}
+import type { TArgsCreate, TArgsUpdate } from '@/types'
+import type { IFinanceService } from '@/interfaces'
 
 export class FinanceService implements IFinanceService<TFinanceModel> {
   private collectionName = 'finances'
@@ -43,7 +36,20 @@ export class FinanceService implements IFinanceService<TFinanceModel> {
     return data as TFinanceModel[]
   }
 
-  create = async (data: TFinanceArgsCreate<TFinanceModel>) => {
+  findRecurring = async (financeRef: string) => {
+    const q = query(
+      collection(db, this.collectionName),
+      where('financeRef', '==', financeRef)
+    )
+    const { docs } = await getDocs(q)
+    const data = docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    return data as TFinanceModel[]
+  }
+
+  create = async (data: TArgsCreate<TFinanceModel>) => {
     const docRef = collection(db, this.collectionName)
     const timestamp = getTimestamp()
     const finance: Omit<TFinanceModel, 'id'> = {
@@ -54,7 +60,22 @@ export class FinanceService implements IFinanceService<TFinanceModel> {
     await addDoc(docRef, finance)
   }
 
-  update = async (data: TFinanceArgsUpdate<TFinanceModel>) => {
+  createRecurring = async (data: TArgsCreate<TFinanceModel>[]) => {
+    const batch = writeBatch(db)
+    const timestamp = getTimestamp()
+    data.forEach((item) => {
+      const docRef = doc(db, this.collectionName, uuid())
+      const finance: Omit<TFinanceModel, 'id'> = {
+        ...item,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }
+      batch.set(docRef, finance)
+    })
+    await batch.commit()
+  }
+
+  update = async (data: TArgsUpdate<TFinanceModel>) => {
     const docRef = doc(db, this.collectionName, data.id)
     const timestamp = getTimestamp()
     const finance: TFinanceModel = {
@@ -64,8 +85,31 @@ export class FinanceService implements IFinanceService<TFinanceModel> {
     await updateDoc(docRef, finance)
   }
 
+  updateRecurring = async (data: TArgsUpdate<TFinanceModel>[]) => {
+    const batch = writeBatch(db)
+    const timestamp = getTimestamp()
+    data.forEach((item) => {
+      const docRef = doc(db, this.collectionName, item.id)
+      const finance: TFinanceModel = {
+        ...item,
+        updatedAt: timestamp
+      }
+      batch.update(docRef, finance)
+    })
+    await batch.commit()
+  }
+
   delete = async (id: string) => {
     const docRef = doc(db, this.collectionName, id)
     await deleteDoc(docRef)
+  }
+
+  deleteRecurring = async (ids: string[]) => {
+    const batch = writeBatch(db)
+    ids.forEach((id) => {
+      const docRef = doc(db, this.collectionName, id)
+      batch.delete(docRef)
+    })
+    await batch.commit()
   }
 }

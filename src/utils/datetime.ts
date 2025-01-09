@@ -14,5 +14,13 @@ export const getPeriod = ({
   month: string
   months: string[]
 }) => {
-  return `${year}-${months.indexOf(month) + 1}`
+  return dayjs(`${year}-${months.indexOf(month) + 1}-01`).format('YYYY-MM')
 }
+
+export const getCurrentDate = () => dayjs().utc().format('YYYY-MM-DD')
+
+export const getCurrentYear = () => Number(dayjs().utc().format('YYYY'))
+
+export const getCurrentMonth = () => Number(dayjs().utc().format('MM'))
+
+export const getCurrentPeriod = () => dayjs().utc().format('YYYY-MM')

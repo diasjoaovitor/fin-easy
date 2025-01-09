@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { currentMonth, currentYear, defaultFinance, months } from '@/constants'
+import { defaultFinance, months, type TDefaultFinance } from '@/constants'
 import type { TFinanceModel } from '@/models'
 import { useAppStore } from '@/stores'
 import type { TFormMode, TWalletData } from '@/types'
-import { getPeriod, getWallet } from '@/utils'
+import { getCurrentMonth, getCurrentYear, getPeriod, getWallet } from '@/utils'
+import dayjs from 'dayjs'
 
 const appStore = useAppStore()
+
+const currentMonth = getCurrentMonth()
+const currentYear = getCurrentYear()
 
 const month = ref(months[currentMonth - 1])
 const year = ref(currentYear)
@@ -15,7 +19,7 @@ const formOverlay = ref(false)
 const mode = ref<TFormMode>('create')
 
 const finances = ref<TFinanceModel[]>([])
-const finance = ref(defaultFinance as TFinanceModel)
+const finance = ref<TFinanceModel | TDefaultFinance>(defaultFinance)
 const wallet = ref<TWalletData>({
   balance: 0,
   incomes: 0,
@@ -23,12 +27,14 @@ const wallet = ref<TWalletData>({
 })
 
 onMounted(async () => {
-  await appStore.fetchFinances()
+  await appStore.fetchYears()
+  await appStore.fetchFinances(appStore.period)
 })
 
 watch([month, year], async ([newMonth, newYear]) => {
-  appStore.period = getPeriod({ month: newMonth, year: newYear, months })
-  await appStore.fetchFinances()
+  const period = getPeriod({ month: newMonth, year: newYear, months })
+  appStore.period = period
+  await appStore.fetchFinances(period)
 })
 
 watch(
@@ -36,6 +42,21 @@ watch(
   () => {
     finances.value = appStore.finances
     wallet.value = getWallet(appStore.finances)
+  }
+)
+
+watch(
+  () => appStore.period,
+  (newValue) => {
+    month.value = months[dayjs(newValue).month()]
+    year.value = dayjs(newValue).year()
+  }
+)
+
+watch(
+  () => appStore.years,
+  (newValue) => {
+    years.value = newValue.years
   }
 )
 

@@ -36,6 +36,9 @@ const emit = defineEmits(['select:finance'])
             </v-list-item-subtitle>
             <v-list-item-title class="text-h6">
               {{ item.description }}
+              <span v-if="item.numberOfRepeats > 1">{{
+                `${item.numberOfRepeat}/${item.numberOfRepeats}`
+              }}</span>
             </v-list-item-title>
           </div>
           <div v-else>

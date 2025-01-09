@@ -1,5 +1,7 @@
 export type TFinanceType = '+' | '-'
 
+export type TFrequencyType = 'YEARLY' | 'WEEKLY' | 'MONTHLY' | null
+
 export type TFinanceModel = {
   id: string
   userRef: string
@@ -8,10 +10,10 @@ export type TFinanceModel = {
   description?: string
   category: string
   date: string
+  financeRef: string
+  frequency: TFrequencyType
+  numberOfRepeats: number
+  numberOfRepeat: number
   createdAt: string
   updatedAt: string
 }
-
-export type TFinanceArgsCreate<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>
-
-export type TFinanceArgsUpdate<T> = Omit<T, 'updatedAt'> & { id: string }

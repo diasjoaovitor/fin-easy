@@ -23,7 +23,18 @@ export const financeSchema = yup.object().shape({
     .test('isDate', 'Data inválida', (value) => {
       return !isNaN(Date.parse(value))
     }),
-  category: yup.string().required('Categoria é obrigatória')
+  category: yup.string().required('Categoria é obrigatória'),
+  frequency: yup
+    .string()
+    .required('Frequência é obrigatória')
+    .oneOf(
+      ['Anual', 'Mensal', 'Semanal', 'Não repetir'],
+      'Frequência inválida'
+    ),
+  numberOfRepeats: yup
+    .number()
+    .required('Número de repetições é obrigatório')
+    .min(1, 'Número de repetições deve ser maior que zero')
 })
 
 export type TFinanceFormData = yup.InferType<typeof financeSchema>

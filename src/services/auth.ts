@@ -6,14 +6,7 @@ import {
   type User
 } from 'firebase/auth'
 import { authConfig } from '@/config'
-
-interface IAuthService {
-  signUp: (email: string, password: string) => Promise<void>
-  signIn: (email: string, password: string) => Promise<void>
-  signOut: () => Promise<void>
-  resendEmailVerification: (user: User) => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-}
+import type { IAuthService } from '@/interfaces'
 
 export class AuthService implements IAuthService {
   signUp = async (email: string, password: string) => {
@@ -23,6 +16,7 @@ export class AuthService implements IAuthService {
       password
     )
     await sendEmailVerification(user)
+    return user.uid
   }
 
   signIn = async (email: string, password: string) => {

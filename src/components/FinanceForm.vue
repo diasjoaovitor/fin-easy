@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import { useField, useForm } from 'vee-validate'
 import dayjs from 'dayjs'
+import { v4 as uuid } from 'uuid'
 import type { TFinanceModel, TFinanceType } from '@/models'
-import type { TFormMode } from '@/types'
+import type { TArgsCreate, TFormMode } from '@/types'
 import { financeSchema, type TFinanceFormData } from '@/schemas'
 import {
   formatCurrencyMask,
   formatCurrencyToNumber,
-  getButtonColor
+  getButtonColor,
+  transformToRecurringFinance
 } from '@/utils'
 import { useAppStore } from '@/stores'
 import { authConfig } from '@/config'
-import { expenseCategories, incomeCategories } from '@/constants'
+import {
+  expenseCategories,
+  incomeCategories,
+  recurringOptions,
+  type TDefaultFinance
+} from '@/constants'
 
 const appStore = useAppStore()
 
 const props = defineProps<{
-  finance: TFinanceModel
+  finance: TFinanceModel | TDefaultFinance
   mode: TFormMode
   overlay: boolean
 }>()
@@ -32,7 +39,11 @@ const initialValues = computed<TFinanceFormData>(() => ({
   date: props.finance.date,
   description: props.finance.description,
   type: props.finance.type,
-  value: formatCurrencyMask(props.finance.value)
+  value: formatCurrencyMask(props.finance.value),
+  frequency: recurringOptions.find(
+    (option) => option.value === props.finance.frequency
+  )!.label,
+  numberOfRepeats: props.finance.numberOfRepeats
 }))
 
 const { handleReset, handleSubmit, resetForm } = useForm({
@@ -45,6 +56,10 @@ const categoryField = useField<string>('category')
 const descriptionField = useField<string>('description')
 const valueField = useField<string>('value')
 const dateField = useField<string>('date')
+const frequencyField = useField<string>('frequency')
+const numberOfRepeatsField = useField<number>('numberOfRepeats')
+
+const isRecurring = computed(() => frequencyField.value.value !== 'Não repetir')
 
 const categories = computed(() =>
   typeField.value.value === '-' ? expenseCategories : incomeCategories
@@ -83,6 +98,20 @@ watch(
 )
 
 watch(
+  () => frequencyField.value.value,
+  () => {
+    if (!isRecurring.value) {
+      numberOfRepeatsField.value.value = 1
+      return
+    }
+
+    if (numberOfRepeatsField.value.value === 1) {
+      numberOfRepeatsField.value.value = 2
+    }
+  }
+)
+
+watch(
   () => props.finance,
   () => {
     resetForm({
@@ -106,16 +135,58 @@ const setCursorToEnd = (event: FocusEvent) => {
 }
 
 const handleDelete = async () => {
-  await appStore.deleteFinance(props.finance.id)
+  const { frequency, id, financeRef } = props.finance as TFinanceModel
+  frequency === null
+    ? await appStore.deleteFinance(id)
+    : await appStore.deleteRecurringFinance(financeRef)
   dialog.value = false
   overlay.value = false
 }
 
 const submit = handleSubmit(async (values) => {
   const value = formatCurrencyToNumber(values.value) / 100
-  props.mode === 'create'
-    ? await appStore.createFinance({ ...values, value, userRef })
-    : await appStore.updateFinance({ ...props.finance, ...values, value })
+  const financeRef = uuid()
+
+  if (props.mode === 'create') {
+    const data: TArgsCreate<TFinanceModel> = {
+      ...(props.finance as TDefaultFinance),
+      ...values,
+      value,
+      userRef,
+      financeRef,
+      frequency: null
+    }
+
+    if (values.frequency === 'Não repetir') {
+      await appStore.createFinance(data)
+    } else {
+      const recurringData = transformToRecurringFinance({
+        ...data,
+        frequency: recurringOptions.find(
+          (option) => option.label === values.frequency
+        )!.value
+      })
+      await appStore.createRecurringFinance(recurringData)
+    }
+  } else {
+    if (values.frequency === 'Não repetir') {
+      const data: TFinanceModel = {
+        ...(props.finance as TFinanceModel),
+        ...values,
+        value,
+        frequency: null
+      }
+      await appStore.updateFinance(data)
+    } else {
+      const data: TFinanceModel = {
+        ...(props.finance as TFinanceModel),
+        ...values,
+        value,
+        frequency: props.finance.frequency
+      }
+      await appStore.updateRecurringFinance(data)
+    }
+  }
   overlay.value = false
 })
 </script>
@@ -203,7 +274,39 @@ const submit = handleSubmit(async (values) => {
           :color="color"
           prepend-icon=""
           prepend-inner-icon="$calendar"
+          :disabled="props.finance.frequency !== null"
         />
+        <v-expansion-panels class="mb-4">
+          <v-expansion-panel
+            :title="
+              mode === 'create' ? 'Adicionar recorrência' : 'Editar Recorrência'
+            "
+          >
+            <v-expansion-panel-text>
+              <div class="d-flex ga-2">
+                <v-select
+                  v-model="frequencyField.value.value"
+                  class="w-100"
+                  :items="recurringOptions.map((option) => option.label)"
+                  variant="outlined"
+                  label="Frequência"
+                  :color="color"
+                  :disabled="mode === 'update'"
+                />
+                <v-text-field
+                  v-model="numberOfRepeatsField.value.value"
+                  class="flex-1-1"
+                  label="Repetir"
+                  variant="outlined"
+                  type="number"
+                  :min="!isRecurring ? 1 : 2"
+                  :disabled="!isRecurring || mode === 'update'"
+                  :color="color"
+                />
+              </div>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
         <v-btn
           v-if="mode === 'create'"
           type="submit"
