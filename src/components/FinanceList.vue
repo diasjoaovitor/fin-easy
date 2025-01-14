@@ -10,7 +10,7 @@ const emit = defineEmits(['select:finance'])
 </script>
 
 <template>
-  <v-list class="pa-4 rounded d-flex flex-column ga-2">
+  <v-list class="pa-2 rounded d-flex flex-column ga-2">
     <v-list-item v-if="items.length === 0">
       <v-list-item-title> Nenhum lançamento encontrado </v-list-item-title>
     </v-list-item>
@@ -31,29 +31,29 @@ const emit = defineEmits(['select:finance'])
             "
           />
           <div v-if="item.description">
-            <v-list-item-subtitle class="text-caption">
+            <h3 class="text-caption">
               {{ item.category }}
-            </v-list-item-subtitle>
-            <v-list-item-title class="text-h6">
+            </h3>
+            <p class="text-h6">
               {{ item.description }}
               <span v-if="item.numberOfRepeats > 1">{{
                 `${item.numberOfRepeat}/${item.numberOfRepeats}`
               }}</span>
-            </v-list-item-title>
+            </p>
           </div>
           <div v-else>
-            <v-list-item-title class="text-h6">
+            <p class="text-h6">
               {{ item.category }}
-            </v-list-item-title>
+            </p>
           </div>
         </div>
         <div>
-          <v-list-item-subtitle class="text-caption text-right">
+          <h3 class="text-caption text-right">
             {{ dayjs(item.date).format('DD/MM/YYYY') }}
-          </v-list-item-subtitle>
-          <v-list-item-title class="text-h6">
+          </h3>
+          <p class="text-h6">
             {{ formatCurrency(item.value) }}
-          </v-list-item-title>
+          </p>
         </div>
       </div>
     </v-list-item>
