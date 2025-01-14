@@ -39,7 +39,7 @@ const initialValues = computed<TFinanceFormData>(() => ({
   date: props.finance.date,
   description: props.finance.description,
   type: props.finance.type,
-  value: formatCurrencyMask(props.finance.value),
+  value: formatCurrencyMask(props.finance.value * 100),
   frequency: recurringOptions.find(
     (option) => option.value === props.finance.frequency
   )!.label,
@@ -192,148 +192,157 @@ const submit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <v-overlay v-model="overlay" class="align-center justify-center">
-    <v-card class="pa-6" width="100vw" max-width="400">
-      <v-card-title class="d-flex justify-space-between align-center pa-0">
-        {{ mode === 'create' ? 'Novo lançamento' : 'Editar lançamento' }}
-        <v-btn
-          icon="mdi-arrow-left"
-          class="relative"
-          @click="overlay = false"
-        />
-      </v-card-title>
-      <v-form novalidate @submit.prevent="submit">
-        <v-radio-group
-          v-model="typeField.value.value"
-          :error-messages="typeField.errorMessage.value"
-          inline
-        >
-          <v-radio label="Entrada" value="+" color="primary" />
-          <v-radio label="Saída" value="-" color="error" />
-        </v-radio-group>
-        <v-radio-group v-model="categoryField.value.value">
-          <fieldset class="pa-4 pt-2 rounded">
-            <legend class="text-caption text-medium-emphasis">Categoria</legend>
-            <div
-              style="
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 4px;
-              "
-            >
-              <v-label
-                v-for="{ icon, label } in categories"
-                :key="label"
-                class="cursor-pointer border rounded pa-2 d-block text-center"
-                :class="{
-                  [`border-${color}`]: label === categoryField.value.value
-                }"
+  <v-overlay
+    v-model="overlay"
+    class="d-flex flex-column align-center justify-center"
+  >
+    <div class="h-screen d-flex flex-column align-center justify-center pa-2">
+      <v-card class="pa-6 overflow-auto" width="100vw" max-width="400">
+        <v-card-title class="d-flex justify-space-between align-center pa-0">
+          {{ mode === 'create' ? 'Novo lançamento' : 'Editar lançamento' }}
+          <v-btn
+            icon="mdi-arrow-left"
+            class="relative"
+            @click="overlay = false"
+          />
+        </v-card-title>
+        <v-form novalidate @submit.prevent="submit">
+          <v-radio-group
+            v-model="typeField.value.value"
+            :error-messages="typeField.errorMessage.value"
+            inline
+          >
+            <v-radio label="Entrada" value="+" color="primary" />
+            <v-radio label="Saída" value="-" color="error" />
+          </v-radio-group>
+          <v-radio-group v-model="categoryField.value.value">
+            <fieldset class="pa-4 pt-2 rounded">
+              <legend class="text-caption text-medium-emphasis">
+                Categoria
+              </legend>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr 1fr;
+                  gap: 4px;
+                "
               >
-                <v-radio :value="label" class="d-none" />
-                <v-icon
-                  :color="label !== categoryField.value.value ? '' : color"
-                >
-                  {{ icon }}
-                </v-icon>
-                <div
-                  class="text-caption"
+                <v-label
+                  v-for="{ icon, label } in categories"
+                  :key="label"
+                  class="cursor-pointer border rounded pa-2 d-block text-center"
                   :class="{
-                    [`text-${color}`]: label === categoryField.value.value
+                    [`border-${color}`]: label === categoryField.value.value
                   }"
                 >
-                  {{ label }}
-                </div>
-              </v-label>
-            </div>
-          </fieldset>
-        </v-radio-group>
-        <v-text-field
-          v-model.trim="descriptionField.value.value"
-          :error-messages="descriptionField.errorMessage.value"
-          label="Descrição"
-          variant="outlined"
-          :color="color"
-        />
-        <v-text-field
-          v-model="valueField.value.value"
-          :error-messages="valueField.errorMessage.value"
-          label="Valor"
-          variant="outlined"
-          :color="color"
-          prefix="R$"
-          inputmode="numeric"
-          @input="handleInput"
-          @focus="setCursorToEnd"
-        />
-        <v-date-input
-          v-model="dateField.value.value"
-          :error-messages="dateField.errorMessage.value"
-          type="date-local"
-          label="Data"
-          variant="outlined"
-          :color="color"
-          prepend-icon=""
-          prepend-inner-icon="$calendar"
-          :disabled="props.finance.frequency !== null"
-        />
-        <v-expansion-panels class="mb-4">
-          <v-expansion-panel
-            :title="
-              mode === 'create' ? 'Adicionar recorrência' : 'Editar Recorrência'
-            "
-          >
-            <v-expansion-panel-text>
-              <div class="d-flex ga-2">
-                <v-select
-                  v-model="frequencyField.value.value"
-                  class="w-100"
-                  :items="recurringOptions.map((option) => option.label)"
-                  variant="outlined"
-                  label="Frequência"
-                  :color="color"
-                  :disabled="mode === 'update'"
-                />
-                <v-text-field
-                  v-model="numberOfRepeatsField.value.value"
-                  class="flex-1-1"
-                  label="Repetir"
-                  variant="outlined"
-                  type="number"
-                  :min="!isRecurring ? 1 : 2"
-                  :disabled="!isRecurring || mode === 'update'"
-                  :color="color"
-                />
+                  <v-radio :value="label" class="d-none" />
+                  <v-icon
+                    :color="label !== categoryField.value.value ? '' : color"
+                  >
+                    {{ icon }}
+                  </v-icon>
+                  <div
+                    class="text-caption"
+                    :class="{
+                      [`text-${color}`]: label === categoryField.value.value
+                    }"
+                  >
+                    {{ label }}
+                  </div>
+                </v-label>
               </div>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
-        <v-btn
-          v-if="mode === 'create'"
-          type="submit"
-          :color="getButtonColor(typeField.value.value)"
-          class="w-100"
-        >
-          Salvar
-        </v-btn>
-        <div v-else class="d-flex ga-2">
+            </fieldset>
+          </v-radio-group>
+          <v-text-field
+            v-model.trim="descriptionField.value.value"
+            :error-messages="descriptionField.errorMessage.value"
+            label="Descrição"
+            variant="outlined"
+            :color="color"
+          />
+          <v-text-field
+            v-model="valueField.value.value"
+            :error-messages="valueField.errorMessage.value"
+            label="Valor"
+            variant="outlined"
+            :color="color"
+            prefix="R$"
+            inputmode="numeric"
+            @input="handleInput"
+            @focus="setCursorToEnd"
+          />
+          <v-date-input
+            v-model="dateField.value.value"
+            :error-messages="dateField.errorMessage.value"
+            type="date-local"
+            label="Data"
+            variant="outlined"
+            :color="color"
+            prepend-icon=""
+            prepend-inner-icon="$calendar"
+            :disabled="props.finance.frequency !== null"
+          />
+          <v-expansion-panels class="mb-4">
+            <v-expansion-panel
+              :title="
+                mode === 'create'
+                  ? 'Adicionar recorrência'
+                  : 'Editar Recorrência'
+              "
+            >
+              <v-expansion-panel-text>
+                <div class="d-flex ga-2">
+                  <v-select
+                    v-model="frequencyField.value.value"
+                    class="w-100"
+                    :items="recurringOptions.map((option) => option.label)"
+                    variant="outlined"
+                    label="Frequência"
+                    :color="color"
+                    :disabled="mode === 'update'"
+                  />
+                  <v-text-field
+                    v-model="numberOfRepeatsField.value.value"
+                    class="flex-1-1"
+                    label="Repetir"
+                    variant="outlined"
+                    type="number"
+                    :min="!isRecurring ? 1 : 2"
+                    :disabled="!isRecurring || mode === 'update'"
+                    :color="color"
+                  />
+                </div>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
           <v-btn
+            v-if="mode === 'create'"
             type="submit"
             :color="getButtonColor(typeField.value.value)"
-            class="w-75"
+            class="w-100"
           >
             Salvar
           </v-btn>
-          <v-btn
-            type="button"
-            color="warning"
-            class="flex-1-1"
-            @click="dialog = true"
-          >
-            Excluir
-          </v-btn>
-        </div>
-      </v-form>
-    </v-card>
+          <div v-else class="d-flex ga-2">
+            <v-btn
+              type="submit"
+              :color="getButtonColor(typeField.value.value)"
+              class="w-75"
+            >
+              Salvar
+            </v-btn>
+            <v-btn
+              type="button"
+              color="warning"
+              class="flex-1-1"
+              @click="dialog = true"
+            >
+              Excluir
+            </v-btn>
+          </div>
+        </v-form>
+      </v-card>
+    </div>
   </v-overlay>
   <Dialog
     :dialog="dialog"
